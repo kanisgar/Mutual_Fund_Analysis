@@ -1,0 +1,46 @@
+{
+  "funds": [
+    {
+      "url": "https://api.mfapi.in/mf/122640",
+	  "name": "Parag Parikh Flexi Cap Fund - Regular Plan - Growth",
+      "sip_day": 17,
+      "sip_amount": 80000,
+      "years": 7
+    },
+    {
+      "url": "https://api.mfapi.in/mf/127039",
+	  "name": "Motilal Oswal Midcap Fund-Regular Plan-Growth Option",
+      "sip_day": 17,
+      "sip_amount": 20000,
+      "years": 7
+    },
+    {
+      "url": "https://api.mfapi.in/mf/130502",
+	  "name": "HDFC Small Cap Fund - Growth Option",
+      "sip_day": 17,
+      "sip_amount": 20000,
+      "years": 7
+    },
+    {
+      "url": "https://api.mfapi.in/mf/103085",
+	  "name": "Nippon India Value Fund- Growth Plan",
+      "sip_day": 17,
+      "sip_amount": 30000,
+      "years": 7
+    },
+    {
+      "url": "https://api.mfapi.in/mf/113221",
+	  "name": "CANARA ROBECO BLUE CHIP EQUITY FUND - REGULAR PLAN - GROWTH OPTION",
+      "sip_day": 17,
+      "sip_amount": 30000,
+      "years": 7
+    },
+    {
+      "url": "https://api.mfapi.in/mf/109522",
+	  "name": "JM Flexicap Fund (Regular) - Growth option",
+      "sip_day": 17,
+      "sip_amount": 20000,
+      "years": 7
+    }
+  ]
+}
