@@ -64,7 +64,7 @@ for sip_day in range(1, 32):
         next_year = current.year if current.month < 12 else current.year + 1
         current = datetime(next_year, next_month, 1)
 
-    if len(sip_investments) < 24:
+    if len(sip_investments) < 12:
         continue
 
     sip_df = pd.DataFrame(sip_investments)
