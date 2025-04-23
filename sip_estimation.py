@@ -66,52 +66,95 @@ def analyze_fund(url, sip_day, sip_amount, years):
             sip_investments.append(nav_row.iloc[0])
             months_done += 1
 
-        # Move to next month
         next_month = current.month + 1 if current.month < 12 else 1
         next_year = current.year if current.month < 12 else current.year + 1
         current = datetime(next_year, next_month, 1)
 
     if len(sip_investments) < 12:
         print(f"❌ Not enough data to simulate SIP for {scheme_name}")
-        return None
+        return None, None
 
     sip_df = pd.DataFrame(sip_investments)
     total_units = (sip_amount / sip_df['nav']).sum()
     total_invested = len(sip_df) * sip_amount
     final_value = total_units * df.iloc[-1]['nav']
     actual_years = (df.iloc[-1]['date'] - sip_df.iloc[0]['date']).days / 365.25
-    cagr = (final_value / total_invested) ** (1 / actual_years) - 1
+    cagr = calculate_cagr(total_invested, final_value, actual_years)
 
     return {
         'Fund': scheme_name,
         'CAGR (%)': round(cagr * 100, 2),
         'Final Value (₹)': f"{final_value:,.2f}",
         'Total Invested (₹)': f"{total_invested:,.2f}"
-    }
+    }, (df, final_value)
+
+def apply_resting_period(df, invested_amount, years):
+    if years <= 0:
+        return invested_amount, 0
+
+    df = df.sort_values('date')
+    end_date = df['date'].max()
+    start_date = end_date - pd.DateOffset(years=years)
+    resting_df = df[df['date'] >= start_date]
+
+    if resting_df.empty:
+        return invested_amount, 0
+
+    start_nav = resting_df.iloc[0]['nav']
+    end_nav = resting_df.iloc[-1]['nav']
+    cagr = calculate_cagr(start_nav, end_nav, years)
+    rested_value = calculate_estimated_amount(cagr, years, invested_amount)
+    return rested_value, round(cagr * 100, 2)
 
 def main():
     funds = get_user_input_or_load_file()
     results = []
+    resting_results = []
     total_invested = 0
     total_final_value = 0.0
+    total_rested_value = 0.0
 
     for fund in funds:
-        print(f"\n🔍 Analyzing {fund['name']}...")
-        result = analyze_fund(fund['url'], fund['sip_day'], fund['sip_amount'], fund['years'])
+        print(f"\n🔍 Analyzing fund...")
+        result, meta = analyze_fund(fund['url'], fund['sip_day'], fund['sip_amount'], fund['years'])
         if result:
             results.append(result)
             total_invested += float(result['Total Invested (₹)'].replace(',', ''))
             total_final_value += float(result['Final Value (₹)'].replace(',', ''))
 
-    print("\n📊 Individual Fund Results:")
+            resting_years = int(input(f"Enter resting period (years) for '{result['Fund']}' (0 for none): "))
+            if resting_years > 0:
+                df, final_value = meta
+                rested_value, resting_cagr = apply_resting_period(df, final_value, resting_years)
+                resting_results.append({
+                    'Fund': result['Fund'],
+                    'Invested Amount (₹)': f"{final_value:,.2f}",
+                    'Rested Value (₹)': f"{rested_value:,.2f}",
+                    'Resting Period CAGR (%)': resting_cagr
+                })
+                total_rested_value += rested_value
+
+    print("\n📊 SIP Fund Results:")
     print(tabulate(results, headers="keys", tablefmt="fancy_grid"))
 
+    if resting_results:
+        print("\n📊 Resting Period Fund Results:")
+        print(tabulate(resting_results, headers="keys", tablefmt="fancy_grid"))
+
     if results:
-        total_cagr = (total_final_value / total_invested) ** (1 / funds[0]['years']) - 1
+        total_cagr = calculate_cagr(total_invested, total_final_value, funds[0]['years'])
         print("\n📈 Aggregated Summary:")
         print(f"Total Invested: ₹{total_invested:,.2f}")
         print(f"Total Final Value: ₹{total_final_value:,.2f}")
         print(f"Aggregate CAGR over {funds[0]['years']} years: {total_cagr * 100:.2f}%")
+
+    if resting_results:
+        resting_years_set = set([int(input(f"\n🔁 Please re-confirm resting period used for aggregate CAGR calculation: "))])
+        if len(resting_years_set) == 1:
+            resting_years = resting_years_set.pop()
+            overall_cagr = calculate_cagr(total_final_value, total_rested_value, resting_years)
+            print(f"Aggregate Resting Period Value: ₹{total_rested_value:,.2f}")
+            print(f"Aggregate Resting Period CAGR over {resting_years} years: {overall_cagr * 100:.2f}%")
 
 if __name__ == '__main__':
     main()
